@@ -73,6 +73,9 @@ const Footer = () => {
             <Link to="/cookies" className="hover:text-foreground transition-colors">
               Cookie Policy
             </Link>
+            <Link to="/auth/login?type=employer" className="hover:text-foreground transition-colors">
+              Employer Sign In
+            </Link>
           </div>
           <div>
             Made with ❤️ for job seekers worldwide
