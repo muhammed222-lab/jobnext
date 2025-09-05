@@ -1,83 +1,84 @@
-import { useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useCurrentUser } from "@/lib/useCurrentUser";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Plus, 
-  Briefcase, 
-  Users, 
-  Eye, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Briefcase,
+  Users,
+  Eye,
+  Edit,
+  Trash2,
   MessageSquare,
-  Bell,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  // Mock data - In production, this would come from Supabase
-  const [jobs] = useState([
-    {
-      id: 1,
-      title: "Senior Frontend Developer",
-      status: "Active",
-      applicants: 23,
-      views: 156,
-      posted: "2 days ago",
-      type: "Full-time",
-      location: "San Francisco, CA"
-    },
-    {
-      id: 2,
-      title: "Product Manager",
-      status: "Draft",
-      applicants: 0,
-      views: 0,
-      posted: "Draft",
-      type: "Full-time",
-      location: "New York, NY"
-    }
-  ]);
+  const email =
+    typeof window !== "undefined"
+      ? localStorage.getItem("userEmail") || ""
+      : "";
+  const user = useCurrentUser(email);
+  const jobs = useQuery(api.jobs.list, {});
+  const isAdmin =
+    typeof window !== "undefined"
+      ? localStorage.getItem("isAdmin") === "1"
+      : false;
+  // For normal users, fetch applications
+  const applications = useQuery(
+    api.applications.listByUser,
+    !isAdmin && email ? { userId: email } : "skip"
+  );
 
-  const [applications] = useState([
-    {
-      id: 1,
-      jobTitle: "Senior Frontend Developer",
-      applicantName: "Sarah Johnson",
-      appliedDate: "1 day ago",
-      status: "Under Review",
-      email: "sarah.j@email.com",
-      hasUnreadMessages: true
-    },
-    {
-      id: 2,
-      jobTitle: "Senior Frontend Developer", 
-      applicantName: "Mike Chen",
-      appliedDate: "2 days ago",
-      status: "Shortlisted",
-      email: "mike.c@email.com",
-      hasUnreadMessages: false
-    }
-  ]);
-
-  const stats = [
-    { label: "Active Jobs", value: "2", icon: Briefcase, color: "text-primary" },
-    { label: "Total Applications", value: "23", icon: Users, color: "text-success" },
-    { label: "Job Views", value: "156", icon: Eye, color: "text-blue-600" },
-    { label: "Messages", value: "5", icon: MessageSquare, color: "text-orange-600" }
-  ];
+  // Stats (dynamic)
+  const stats = isAdmin
+    ? [
+        {
+          label: "Active Jobs",
+          value: jobs ? jobs.length : 0,
+          icon: Briefcase,
+          color: "text-primary",
+        },
+      ]
+    : [
+        {
+          label: "Applications",
+          value: applications ? applications.length : 0,
+          icon: Briefcase,
+          color: "text-primary",
+        },
+      ];
 
   return (
     <div className="container px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-          Employer Dashboard
+          {isAdmin ? "Employer Dashboard" : "User Dashboard"}
         </h1>
-        <p className="text-lg text-muted-foreground">
-          Manage your job postings and connect with talented candidates
-        </p>
+        <div className="mb-2 text-lg text-muted-foreground">
+          <div>
+            Full Name:{" "}
+            <span className="font-semibold text-foreground">
+              {user?.fullName || "-"}
+            </span>
+          </div>
+          <div>
+            Email:{" "}
+            <span className="font-semibold text-foreground">
+              {user?.email || email || "-"}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -103,153 +104,142 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <Tabs defaultValue="jobs" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="jobs">Job Management</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+      {/* Only show job management for admins/employers */}
+      {isAdmin ? (
+        <Tabs defaultValue="jobs" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="jobs">Job Management</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="jobs" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <div>
-                <CardTitle>Your Job Posts</CardTitle>
+          <TabsContent value="jobs" className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle>Your Job Posts</CardTitle>
+                  <CardDescription>
+                    Manage and track your job postings
+                  </CardDescription>
+                </div>
+                <Button asChild className="bg-gradient-primary">
+                  <Link to="/dashboard/create-job">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Post New Job
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {jobs && jobs.length > 0 ? (
+                    jobs
+                      .filter((job) => job.createdBy === email)
+                      .map((job) => (
+                        <div
+                          key={job._id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold text-foreground">
+                                {job.title}
+                              </h3>
+                              {/* You can add more job info here */}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>{job.location}</span>
+                              <span>•</span>
+                              <span>{job.salaryRange}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to={`/jobs/${job._id}`}>
+                                <Eye className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      No jobs found.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Job Performance Analytics
+                </CardTitle>
                 <CardDescription>
-                  Manage and track your job postings
+                  Track the performance of your job postings
                 </CardDescription>
-              </div>
-              <Button asChild className="bg-gradient-primary">
-                <Link to="/dashboard/create-job">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Post New Job
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {jobs.map((job) => (
-                  <div key={job.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-foreground">{job.title}</h3>
-                        <Badge variant={job.status === "Active" ? "default" : "secondary"}>
-                          {job.status}
-                        </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">
+                    Analytics Coming Soon
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Detailed analytics and insights will be available soon.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>My Applications</CardTitle>
+            <CardDescription>Jobs you have applied for</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {applications && applications.length > 0 ? (
+                applications.map((app) => (
+                  <div key={app._id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-foreground">
+                          {app.jobTitle || "Job"}
+                        </h3>
+                        <div className="text-sm text-muted-foreground">
+                          Applied on{" "}
+                          {new Date(app.createdAt).toLocaleDateString()}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{job.location}</span>
-                        <span>•</span>
-                        <span>{job.type}</span>
-                        <span>•</span>
-                        <span>Posted {job.posted}</span>
-                      </div>
+                      <Badge variant="outline">Application</Badge>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-foreground">{job.applicants}</div>
-                        <div className="text-xs text-muted-foreground">Applications</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-foreground">{job.views}</div>
-                        <div className="text-xs text-muted-foreground">Views</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/jobs/${job.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      {app.coverLetter
+                        ? app.coverLetter.slice(0, 80) + "..."
+                        : "No cover letter"}
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="applications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Applications</CardTitle>
-              <CardDescription>
-                Review and manage job applications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {applications.map((application) => (
-                  <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-foreground">{application.applicantName}</h3>
-                        <Badge variant="outline">
-                          {application.status}
-                        </Badge>
-                        {application.hasUnreadMessages && (
-                          <Badge variant="default" className="bg-orange-600">
-                            New Message
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Applied for: {application.jobTitle}</span>
-                        <span>•</span>
-                        <span>{application.appliedDate}</span>
-                        <span>•</span>
-                        <span>{application.email}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/dashboard/applications/${application.id}`}>
-                          View Profile
-                        </Link>
-                      </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/chat?applicant=${application.id}`}>
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Chat
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Job Performance Analytics
-              </CardTitle>
-              <CardDescription>
-                Track the performance of your job postings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Analytics Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Detailed analytics and insights will be available once you connect to Supabase.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                ))
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  You have not applied for any jobs yet.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -16,7 +16,7 @@ import { Briefcase, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConvexLogin } from "@/lib/convexAuth";
 
-const Login = () => {
+const EmployerLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -30,13 +30,19 @@ const Login = () => {
     setIsLoading(true);
     try {
       const user = await login(email, password);
-      localStorage.setItem("userEmail", user.email);
-      localStorage.setItem("isAdmin", user.isAdmin ? "1" : "0");
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to JobNext!",
-      });
-      setTimeout(() => navigate("/dashboard"), 1200);
+      if (user.isAdmin) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back, Employer!",
+        });
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Access Denied",
+          description: "You are not an employer/admin.",
+          variant: "destructive",
+        });
+      }
     } catch (err: any) {
       toast({
         title: "Login Failed",
@@ -54,8 +60,8 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded">
-              <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded bg-gradient-primary">
+              <Briefcase className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold text-foreground">JobNext</span>
           </Link>
@@ -63,21 +69,21 @@ const Login = () => {
 
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-bold">Employer Login</CardTitle>
             <CardDescription>
-              Sign in to your JobNext account to continue your job search
+              Sign in to your employer/admin account to manage jobs
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Work Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your work email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -85,7 +91,6 @@ const Login = () => {
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -114,63 +119,28 @@ const Login = () => {
                   </Button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    className="rounded border-border"
-                  />
-                  <Label
-                    htmlFor="remember"
-                    className="text-sm text-muted-foreground"
-                  >
-                    Remember me
-                  </Label>
-                </div>
-                <Link
-                  to="/auth/forgot-password"
-                  className="text-primary hover:text-primary-hover transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
               <Button
                 type="submit"
                 className="w-full bg-gradient-primary hover:shadow-brand transition-all"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? "Signing in..." : "Sign In as Employer"}
               </Button>
             </form>
-
             <div className="mt-6">
               <Separator className="mb-4" />
               <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{" "}
+                Not an employer?{" "}
                 <Link
-                  to="/auth/signup"
+                  to="/auth/login"
                   className="font-medium text-primary hover:text-primary-hover transition-colors"
                 >
-                  Create one now
+                  Sign in as Job Seeker
                 </Link>
               </div>
             </div>
-
-            <div className="mt-4 text-center">
-              <Link
-                to="/auth/employer-login"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Are you an employer?{" "}
-                <span className="text-primary">Sign in here</span>
-              </Link>
-            </div>
           </CardContent>
         </Card>
-
         <div className="mt-6 text-center text-xs text-muted-foreground">
           By signing in, you agree to our{" "}
           <Link to="/terms" className="text-primary hover:underline">
@@ -186,4 +156,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default EmployerLogin;

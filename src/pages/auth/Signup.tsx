@@ -1,29 +1,45 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Briefcase, Eye, EyeOff, Mail, Lock, User, Building } from "lucide-react";
+import {
+  Briefcase,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Building,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConvexSignup } from "@/lib/convexAuth";
 
 const Signup = () => {
   const [jobSeekerData, setJobSeekerData] = useState({
     fullName: "",
-    email: "", 
+    email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-  
+
   const [employerData, setEmployerData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
     companyName: "",
-    companySize: ""
+    companySize: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -31,6 +47,8 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [accountType, setAccountType] = useState("job-seeker");
   const { toast } = useToast();
+  const signup = useConvexSignup();
+  const navigate = useNavigate();
 
   const handleJobSeekerSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,16 +60,27 @@ const Signup = () => {
       });
       return;
     }
-    
     setIsLoading(true);
-    // Simulate API call - In production, this would use Supabase auth
-    setTimeout(() => {
+    try {
+      await signup(
+        jobSeekerData.fullName,
+        jobSeekerData.email,
+        jobSeekerData.password,
+        false
+      );
       toast({
         title: "Account Created Successfully",
         description: "Welcome to JobNext! You can now start applying for jobs.",
       });
-      setIsLoading(false);
-    }, 2000);
+      setTimeout(() => navigate("/auth/login"), 1200);
+    } catch (err: any) {
+      toast({
+        title: "Signup Failed",
+        description: err.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
   };
 
   const handleEmployerSignup = async (e: React.FormEvent) => {
@@ -64,16 +93,27 @@ const Signup = () => {
       });
       return;
     }
-    
     setIsLoading(true);
-    // Simulate API call - In production, this would use Supabase auth
-    setTimeout(() => {
+    try {
+      await signup(
+        employerData.fullName,
+        employerData.email,
+        employerData.password,
+        true
+      );
       toast({
         title: "Employer Account Created",
         description: "Welcome to JobNext! You can now start posting jobs.",
       });
-      setIsLoading(false);
-    }, 2000);
+      setTimeout(() => navigate("/auth/employer-login"), 1200);
+    } catch (err: any) {
+      toast({
+        title: "Signup Failed",
+        description: err.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -97,13 +137,23 @@ const Signup = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={accountType} onValueChange={setAccountType} className="mb-6">
+            <Tabs
+              value={accountType}
+              onValueChange={setAccountType}
+              className="mb-6"
+            >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="job-seeker" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="job-seeker"
+                  className="flex items-center gap-2"
+                >
                   <User className="h-4 w-4" />
                   Job Seeker
                 </TabsTrigger>
-                <TabsTrigger value="employer" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="employer"
+                  className="flex items-center gap-2"
+                >
                   <Building className="h-4 w-4" />
                   Employer
                 </TabsTrigger>
@@ -120,7 +170,12 @@ const Signup = () => {
                         type="text"
                         placeholder="Enter your full name"
                         value={jobSeekerData.fullName}
-                        onChange={(e) => setJobSeekerData({...jobSeekerData, fullName: e.target.value})}
+                        onChange={(e) =>
+                          setJobSeekerData({
+                            ...jobSeekerData,
+                            fullName: e.target.value,
+                          })
+                        }
                         className="pl-10"
                         required
                       />
@@ -136,13 +191,18 @@ const Signup = () => {
                         type="email"
                         placeholder="Enter your email"
                         value={jobSeekerData.email}
-                        onChange={(e) => setJobSeekerData({...jobSeekerData, email: e.target.value})}
+                        onChange={(e) =>
+                          setJobSeekerData({
+                            ...jobSeekerData,
+                            email: e.target.value,
+                          })
+                        }
                         className="pl-10"
                         required
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
@@ -152,7 +212,12 @@ const Signup = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         value={jobSeekerData.password}
-                        onChange={(e) => setJobSeekerData({...jobSeekerData, password: e.target.value})}
+                        onChange={(e) =>
+                          setJobSeekerData({
+                            ...jobSeekerData,
+                            password: e.target.value,
+                          })
+                        }
                         className="pl-10 pr-10"
                         required
                       />
@@ -163,7 +228,11 @@ const Signup = () => {
                         className="absolute right-0 top-0 h-full px-3"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -177,7 +246,12 @@ const Signup = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
                         value={jobSeekerData.confirmPassword}
-                        onChange={(e) => setJobSeekerData({...jobSeekerData, confirmPassword: e.target.value})}
+                        onChange={(e) =>
+                          setJobSeekerData({
+                            ...jobSeekerData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
                         className="pl-10 pr-10"
                         required
                       />
@@ -186,19 +260,27 @@ const Signup = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-primary hover:shadow-brand transition-all"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Creating Account..." : "Create Job Seeker Account"}
+                    {isLoading
+                      ? "Creating Account..."
+                      : "Create Job Seeker Account"}
                   </Button>
                 </form>
               </TabsContent>
@@ -213,7 +295,12 @@ const Signup = () => {
                         type="text"
                         placeholder="Your name"
                         value={employerData.fullName}
-                        onChange={(e) => setEmployerData({...employerData, fullName: e.target.value})}
+                        onChange={(e) =>
+                          setEmployerData({
+                            ...employerData,
+                            fullName: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -224,7 +311,12 @@ const Signup = () => {
                         type="text"
                         placeholder="Company name"
                         value={employerData.companyName}
-                        onChange={(e) => setEmployerData({...employerData, companyName: e.target.value})}
+                        onChange={(e) =>
+                          setEmployerData({
+                            ...employerData,
+                            companyName: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -239,13 +331,18 @@ const Signup = () => {
                         type="email"
                         placeholder="Enter work email"
                         value={employerData.email}
-                        onChange={(e) => setEmployerData({...employerData, email: e.target.value})}
+                        onChange={(e) =>
+                          setEmployerData({
+                            ...employerData,
+                            email: e.target.value,
+                          })
+                        }
                         className="pl-10"
                         required
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="employerPassword">Password</Label>
                     <div className="relative">
@@ -255,7 +352,12 @@ const Signup = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
                         value={employerData.password}
-                        onChange={(e) => setEmployerData({...employerData, password: e.target.value})}
+                        onChange={(e) =>
+                          setEmployerData({
+                            ...employerData,
+                            password: e.target.value,
+                          })
+                        }
                         className="pl-10 pr-10"
                         required
                       />
@@ -266,13 +368,19 @@ const Signup = () => {
                         className="absolute right-0 top-0 h-full px-3"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="employerConfirmPassword">Confirm Password</Label>
+                    <Label htmlFor="employerConfirmPassword">
+                      Confirm Password
+                    </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -280,7 +388,12 @@ const Signup = () => {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
                         value={employerData.confirmPassword}
-                        onChange={(e) => setEmployerData({...employerData, confirmPassword: e.target.value})}
+                        onChange={(e) =>
+                          setEmployerData({
+                            ...employerData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
                         className="pl-10 pr-10"
                         required
                       />
@@ -289,19 +402,27 @@ const Signup = () => {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-primary hover:shadow-brand transition-all"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Creating Account..." : "Create Employer Account"}
+                    {isLoading
+                      ? "Creating Account..."
+                      : "Create Employer Account"}
                   </Button>
                 </form>
               </TabsContent>
@@ -310,8 +431,8 @@ const Signup = () => {
             <Separator className="mb-4" />
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link 
-                to="/auth/login" 
+              <Link
+                to="/auth/login"
                 className="font-medium text-primary hover:text-primary-hover transition-colors"
               >
                 Sign in here

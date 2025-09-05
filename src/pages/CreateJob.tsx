@@ -1,22 +1,37 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Upload, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const CreateJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     company: "",
@@ -29,29 +44,83 @@ const CreateJob = () => {
     requirements: "",
     benefits: "",
     remote: false,
-    urgent: false
+    urgent: false,
   });
+  // Removed image upload state
 
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
 
-  const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Freelance"];
+  const jobTypes = [
+    "Full-time",
+    "Part-time",
+    "Contract",
+    "Internship",
+    "Freelance",
+  ];
   const workModes = ["On-site", "Remote", "Hybrid"];
+
+  const createJob = useMutation(api.jobs.create);
+  const email =
+    typeof window !== "undefined"
+      ? localStorage.getItem("userEmail") || ""
+      : "";
+  const isAdmin =
+    typeof window !== "undefined"
+      ? localStorage.getItem("isAdmin") === "1"
+      : false;
+
+  // Only allow admins/employers to post jobs
+  if (!isAdmin) {
+    return (
+      <div className="container px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+        <p className="text-muted-foreground">
+          You do not have permission to post jobs.
+        </p>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate API call - In production, this would use Supabase
-    setTimeout(() => {
+    try {
+      // Construct salaryRange string
+      const salaryRange =
+        formData.salaryMin && formData.salaryMax
+          ? `$${formData.salaryMin} - $${formData.salaryMax}`
+          : "";
+      await createJob({
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        salaryRange,
+        createdBy: email,
+        type: formData.type,
+        workMode: formData.workMode,
+        remote: formData.remote,
+        urgent: formData.urgent,
+        requirements: formData.requirements,
+        benefits: formData.benefits,
+        skills,
+      });
       toast({
         title: "Job Posted Successfully!",
         description: "Your job posting is now live and accepting applications.",
       });
       navigate("/dashboard");
-      setIsLoading(false);
-    }, 2000);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to post job.",
+        variant: "destructive",
+      });
+    }
+    setIsLoading(false);
   };
+
+  // Removed image upload handler
 
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -61,7 +130,7 @@ const CreateJob = () => {
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter(skill => skill !== skillToRemove));
+    setSkills(skills.filter((skill) => skill !== skillToRemove));
   };
 
   return (
@@ -101,7 +170,9 @@ const CreateJob = () => {
                     <Input
                       id="title"
                       value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
                       placeholder="e.g. Senior Frontend Developer"
                       required
                     />
@@ -111,7 +182,9 @@ const CreateJob = () => {
                     <Input
                       id="company"
                       value={formData.company}
-                      onChange={(e) => setFormData({...formData, company: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, company: e.target.value })
+                      }
                       placeholder="Your company name"
                       required
                     />
@@ -121,7 +194,12 @@ const CreateJob = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type">Job Type *</Label>
-                    <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+                    <Select
+                      value={formData.type}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, type: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
@@ -136,7 +214,12 @@ const CreateJob = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="workMode">Work Mode *</Label>
-                    <Select value={formData.workMode} onValueChange={(value) => setFormData({...formData, workMode: value})}>
+                    <Select
+                      value={formData.workMode}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, workMode: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select mode" />
                       </SelectTrigger>
@@ -154,7 +237,9 @@ const CreateJob = () => {
                     <Input
                       id="location"
                       value={formData.location}
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
                       placeholder="City, State"
                       required
                     />
@@ -168,7 +253,9 @@ const CreateJob = () => {
                       id="salaryMin"
                       type="number"
                       value={formData.salaryMin}
-                      onChange={(e) => setFormData({...formData, salaryMin: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, salaryMin: e.target.value })
+                      }
                       placeholder="e.g. 80000"
                     />
                   </div>
@@ -178,7 +265,9 @@ const CreateJob = () => {
                       id="salaryMax"
                       type="number"
                       value={formData.salaryMax}
-                      onChange={(e) => setFormData({...formData, salaryMax: e.target.value})}
+                      onChange={(e) =>
+                        setFormData({ ...formData, salaryMax: e.target.value })
+                      }
                       placeholder="e.g. 120000"
                     />
                   </div>
@@ -189,7 +278,9 @@ const CreateJob = () => {
                     <Checkbox
                       id="remote"
                       checked={formData.remote}
-                      onCheckedChange={(checked) => setFormData({...formData, remote: !!checked})}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, remote: !!checked })
+                      }
                     />
                     <Label htmlFor="remote">Remote work available</Label>
                   </div>
@@ -197,7 +288,9 @@ const CreateJob = () => {
                     <Checkbox
                       id="urgent"
                       checked={formData.urgent}
-                      onCheckedChange={(checked) => setFormData({...formData, urgent: !!checked})}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, urgent: !!checked })
+                      }
                     />
                     <Label htmlFor="urgent">Urgent hiring</Label>
                   </div>
@@ -219,7 +312,9 @@ const CreateJob = () => {
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     placeholder="Describe the role, responsibilities, and what you're looking for..."
                     className="min-h-32"
                     required
@@ -231,7 +326,9 @@ const CreateJob = () => {
                   <Textarea
                     id="requirements"
                     value={formData.requirements}
-                    onChange={(e) => setFormData({...formData, requirements: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, requirements: e.target.value })
+                    }
                     placeholder="List the required skills, experience, and qualifications..."
                     className="min-h-24"
                     required
@@ -243,7 +340,9 @@ const CreateJob = () => {
                   <Textarea
                     id="benefits"
                     value={formData.benefits}
-                    onChange={(e) => setFormData({...formData, benefits: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, benefits: e.target.value })
+                    }
                     placeholder="What benefits and perks do you offer?"
                     className="min-h-20"
                   />
@@ -265,16 +364,22 @@ const CreateJob = () => {
                     value={newSkill}
                     onChange={(e) => setNewSkill(e.target.value)}
                     placeholder="Add a skill (e.g. React, Python, etc.)"
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addSkill())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addSkill())
+                    }
                   />
                   <Button type="button" onClick={addSkill} variant="outline">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="flex items-center gap-1">
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
                       {skill}
                       <button
                         type="button"
@@ -310,19 +415,30 @@ const CreateJob = () => {
                       {formData.company || "Company Name"}
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-2">
-                    {formData.type && <Badge variant="outline">{formData.type}</Badge>}
-                    {formData.workMode && <Badge variant="outline">{formData.workMode}</Badge>}
-                    {formData.remote && <Badge variant="secondary">Remote OK</Badge>}
+                    {formData.type && (
+                      <Badge variant="outline">{formData.type}</Badge>
+                    )}
+                    {formData.workMode && (
+                      <Badge variant="outline">{formData.workMode}</Badge>
+                    )}
+                    {formData.remote && (
+                      <Badge variant="secondary">Remote OK</Badge>
+                    )}
                     {formData.urgent && <Badge variant="default">Urgent</Badge>}
                   </div>
 
                   <div className="text-sm space-y-1">
-                    <p><strong>Location:</strong> {formData.location || "Not specified"}</p>
+                    <p>
+                      <strong>Location:</strong>{" "}
+                      {formData.location || "Not specified"}
+                    </p>
                     {(formData.salaryMin || formData.salaryMax) && (
-                      <p><strong>Salary:</strong> 
-                        ${formData.salaryMin || "?"} - ${formData.salaryMax || "?"}</p>
+                      <p>
+                        <strong>Salary:</strong>${formData.salaryMin || "?"} - $
+                        {formData.salaryMax || "?"}
+                      </p>
                     )}
                   </div>
 
@@ -342,36 +458,14 @@ const CreateJob = () => {
               </CardContent>
             </Card>
 
-            {/* Company Logo Upload */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Assets</CardTitle>
-                <CardDescription>
-                  Upload your company logo and other assets
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Upload company logo
-                  </p>
-                  <Button variant="outline" size="sm" disabled>
-                    Choose File
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    File uploads available with Supabase integration
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Company Logo Upload removed */}
 
             {/* Submit */}
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-3">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-primary hover:shadow-brand transition-all"
                     disabled={isLoading}
                   >
