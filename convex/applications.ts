@@ -19,53 +19,33 @@ export const create = mutation({
     jobId: v.string(),
     userId: v.string(),
     fullName: v.string(),
-    dob: v.string(),
-    gender: v.string(),
-    maritalStatus: v.string(),
-    nationality: v.string(),
-    phone: v.string(),
     email: v.string(),
+    phone: v.string(),
     address: v.string(),
-    nextOfKin: v.string(),
-    emergencyContact: v.string(),
-    nationalId: v.string(),
-    passport: v.string(),
-    tin: v.string(),
-    ssn: v.string(),
-    workPermit: v.string(),
-    jobTitle: v.string(),
-    department: v.string(),
-    employeeId: v.string(),
-    joiningDate: v.string(),
-    employmentType: v.string(),
-    workLocation: v.string(),
-    supervisor: v.string(),
-    education: v.string(),
-    certifications: v.string(),
-    previousEmployment: v.string(),
-    skills: v.string(),
-    bankName: v.string(),
-    bankAccount: v.string(),
-    bankAccountName: v.string(),
-    paymentMethod: v.string(),
-    salary: v.string(),
-    pensionAccount: v.string(),
-    taxId: v.string(),
-    pensionScheme: v.string(),
-    healthInsurance: v.string(),
-    otherContributions: v.string(),
-    contractAccepted: v.boolean(),
-    offerAccepted: v.boolean(),
-    ndaAccepted: v.boolean(),
-    handbookAccepted: v.boolean(),
-    workTools: v.string(),
     resumeUrl: v.optional(v.string()),
     coverLetter: v.optional(v.string()),
+    skills: v.optional(v.string()),
+    salary: v.optional(v.string()),
+    availability: v.optional(v.string()),
+    formData: v.optional(v.any()), // For custom form submissions
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("applications", {
       ...args,
       createdAt: Date.now(),
+    });
+  },
+});
+
+// Update application with custom form data
+export const updateWithFormData = mutation({
+  args: {
+    applicationId: v.id("applications"),
+    formData: v.any(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.applicationId, {
+      formData: args.formData,
     });
   },
 });

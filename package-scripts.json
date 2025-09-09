@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "test-file-urls": "ts-node scripts/getFileUrls.ts",
+    "get-file-urls": "ts-node scripts/getFileUrls.ts"
+  }
+}

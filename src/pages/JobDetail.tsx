@@ -1,15 +1,17 @@
 import { useParams, Link } from "react-router-dom";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  MapPin, 
-  Clock, 
-  DollarSign, 
-  Briefcase, 
-  Building, 
-  Users, 
+import {
+  MapPin,
+  Clock,
+  DollarSign,
+  Briefcase,
+  Building,
+  Users,
   Calendar,
   Share2,
   Bookmark,
@@ -21,61 +23,8 @@ const JobDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
 
-  // Mock job data - In production, this would fetch from Supabase using the ID
-  const job = {
-    id: 1,
-    title: "Senior Frontend Developer",
-    company: "TechCorp Inc.",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    salary: "$120k - $160k",
-    posted: "2 days ago",
-    description: `We're looking for a senior frontend developer to join our innovative team building next-generation web applications. You'll work with cutting-edge technologies and collaborate with talented designers and backend engineers to create exceptional user experiences.
-
-Key Responsibilities:
-• Develop and maintain responsive web applications using React and TypeScript
-• Collaborate with design and product teams to implement pixel-perfect UIs
-• Write clean, efficient, and well-documented code
-• Participate in code reviews and contribute to technical decisions
-• Mentor junior developers and share best practices
-• Stay up-to-date with the latest frontend technologies and trends
-
-What We Offer:
-• Competitive salary and equity package
-• Comprehensive health, dental, and vision insurance
-• Flexible work arrangements and remote options
-• Professional development budget ($3,000/year)
-• Modern office space in downtown San Francisco
-• Catered meals and snacks
-• Annual team retreats and events`,
-    requirements: [
-      "5+ years of experience with React and JavaScript/TypeScript",
-      "Strong understanding of modern frontend build tools (Webpack, Vite, etc.)",
-      "Experience with state management libraries (Redux, Zustand, etc.)",
-      "Proficiency in CSS and CSS-in-JS solutions",
-      "Experience with testing frameworks (Jest, Cypress, etc.)",
-      "Familiarity with Git and collaborative development workflows",
-      "Bachelor's degree in Computer Science or equivalent experience"
-    ],
-    niceToHave: [
-      "Experience with Next.js or other React frameworks",
-      "Knowledge of backend technologies (Node.js, Python, etc.)",
-      "Experience with cloud platforms (AWS, GCP, Azure)",
-      "Contributions to open source projects",
-      "Experience in a fast-paced startup environment"
-    ],
-    tags: ["React", "TypeScript", "JavaScript", "CSS", "Remote OK"],
-    remote: true,
-    featured: true,
-    company_info: {
-      name: "TechCorp Inc.",
-      size: "200-500 employees",
-      founded: "2015",
-      industry: "Technology, SaaS",
-      description: "TechCorp is a leading provider of innovative software solutions that help businesses streamline their operations and improve efficiency.",
-      benefits: ["Health Insurance", "401(k)", "Remote Work", "Unlimited PTO", "Stock Options"]
-    }
-  };
+  // Fetch actual job data from Convex
+  const job = useQuery(api.jobs.get, id ? { jobId: id } : "skip");
 
   const handleApply = () => {
     toast({
@@ -100,230 +49,182 @@ What We Offer:
     });
   };
 
-  return (
-    <div className="container px-4 py-8">
-      {/* Back Button */}
-      <Button asChild variant="ghost" className="mb-6">
-        <Link to="/jobs">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Jobs
-        </Link>
-      </Button>
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-white">Loading job details...</div>
+      </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Job Header */}
-          <Card>
-            <CardHeader>
+  return (
+    <div className="min-h-screen bg-slate-950">
+      <div className="container px-4 py-8">
+        {/* Back Button */}
+        <Button asChild variant="ghost" className="mb-6 bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white">
+          <Link to="/jobs">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Jobs
+          </Link>
+        </Button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Job Header */}
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
-                  <CardTitle className="text-2xl lg:text-3xl mb-2">{job.title}</CardTitle>
-                  <CardDescription className="text-lg font-medium text-foreground">
-                    {job.company}
-                  </CardDescription>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">{job.title}</h1>
+                  <p className="text-lg font-medium text-slate-300">
+                    {job.createdBy}
+                  </p>
                 </div>
                 <div className="flex gap-2">
-                  {job.featured && (
-                    <Badge variant="default" className="bg-gradient-primary">
-                      Featured
-                    </Badge>
+                  {job.urgent && (
+                    <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+                      Urgent
+                    </span>
                   )}
-                  <Badge variant="outline">{job.type}</Badge>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-slate-300">
+                    {job.type || 'Full-time'}
+                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div className="flex items-center text-sm text-slate-400">
                   <MapPin className="h-4 w-4 mr-2" />
                   {job.location}
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div className="flex items-center text-sm text-slate-400">
                   <Clock className="h-4 w-4 mr-2" />
-                  Posted {job.posted}
+                  {new Date(job.createdAt).toLocaleDateString()}
                 </div>
-                <div className="flex items-center text-sm text-success font-medium">
+                <div className="flex items-center text-sm text-green-400 font-medium">
                   <DollarSign className="h-4 w-4 mr-2" />
-                  {job.salary}
+                  {job.salaryRange || 'Negotiable'}
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
+                <div className="flex items-center text-sm text-slate-400">
                   <Briefcase className="h-4 w-4 mr-2" />
-                  {job.type}
+                  {job.workMode || 'On-site'}
                 </div>
               </div>
 
               {job.remote && (
-                <Badge variant="secondary" className="w-fit">
-                  🌎 Remote Work Available
-                </Badge>
+                <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs text-green-400">
+                  Remote Work Available
+                </span>
               )}
-            </CardHeader>
-          </Card>
+            </div>
 
-          {/* Job Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Job Description</CardTitle>
-            </CardHeader>
-            <CardContent>
+            {/* Job Description */}
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+              <h2 className="text-xl font-bold text-white mb-4">Job Description</h2>
               <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-foreground font-sans">
+                <pre className="whitespace-pre-wrap text-sm text-slate-300 font-sans">
                   {job.description}
                 </pre>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Requirements */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Requirements</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h4 className="font-semibold mb-3 text-foreground">Required Qualifications</h4>
-                <ul className="space-y-2">
-                  {job.requirements.map((req, index) => (
-                    <li key={index} className="flex items-start text-sm">
-                      <span className="text-primary mr-2 mt-1">•</span>
-                      {req}
-                    </li>
+            {/* Requirements */}
+            {job.requirements && (
+              <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+                <h2 className="text-xl font-bold text-white mb-4">Requirements</h2>
+                <div className="prose prose-sm max-w-none">
+                  <pre className="whitespace-pre-wrap text-sm text-slate-300 font-sans">
+                    {job.requirements}
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {/* Benefits */}
+            {job.benefits && (
+              <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+                <h2 className="text-xl font-bold text-white mb-4">Benefits</h2>
+                <div className="prose prose-sm max-w-none">
+                  <pre className="whitespace-pre-wrap text-sm text-slate-300 font-sans">
+                    {job.benefits}
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {/* Skills */}
+            {job.skills && job.skills.length > 0 && (
+              <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+                <h2 className="text-xl font-bold text-white mb-4">Required Skills</h2>
+                <div className="flex flex-wrap gap-2">
+                  {job.skills.map((skill: string, index: number) => (
+                    <span key={index} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-slate-300">
+                      {skill}
+                    </span>
                   ))}
-                </ul>
+                </div>
               </div>
+            )}
+          </div>
 
-              <Separator />
-
-              <div>
-                <h4 className="font-semibold mb-3 text-foreground">Nice to Have</h4>
-                <ul className="space-y-2">
-                  {job.niceToHave.map((nice, index) => (
-                    <li key={index} className="flex items-start text-sm">
-                      <span className="text-muted-foreground mr-2 mt-1">◦</span>
-                      {nice}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Skills */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Required Skills</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {job.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-sm">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Apply Card */}
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-center">Ready to Apply?</CardTitle>
-              <CardDescription className="text-center">
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Apply Card */}
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300 sticky top-6">
+              <h3 className="text-xl font-bold text-white text-center mb-2">Ready to Apply?</h3>
+              <p className="text-slate-400 text-center mb-4">
                 Join {job.company} and take your career to the next level
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button onClick={handleApply} className="w-full bg-gradient-primary hover:shadow-brand transition-all">
-                Apply for this Job
-              </Button>
-              <div className="flex gap-2">
-                <Button onClick={handleSave} variant="outline" className="flex-1">
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Save
-                </Button>
-                <Button onClick={handleShare} variant="outline" className="flex-1">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Company Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                About {job.company_info.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {job.company_info.description}
               </p>
-              
-              <Separator />
-              
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Industry:</span>
-                  <span className="font-medium">{job.company_info.industry}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Company Size:</span>
-                  <span className="font-medium">{job.company_info.size}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Founded:</span>
-                  <span className="font-medium">{job.company_info.founded}</span>
+              <div className="space-y-3">
+                <Button onClick={handleApply} className="w-full bg-primary/20 border-primary/30 text-white hover:bg-primary/30 hover:shadow-xl transition-all">
+                  Apply for this Job
+                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} variant="outline" className="flex-1 bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white">
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button onClick={handleShare} variant="outline" className="flex-1 bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
                 </div>
               </div>
+            </div>
 
-              <Separator />
-
-              <div>
-                <h4 className="font-semibold mb-2 text-sm">Benefits</h4>
-                <div className="flex flex-wrap gap-1">
-                  {job.company_info.benefits.map((benefit, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {benefit}
-                    </Badge>
-                  ))}
-                </div>
+            {/* Company Info */}
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+              <h3 className="flex items-center gap-2 text-xl font-bold text-white">
+                <Building className="h-5 w-5" />
+                About {job.createdBy}
+              </h3>
+              <div className="space-y-4 mt-4">
+                <p className="text-sm text-slate-400">
+                  This job was posted by {job.createdBy}. Contact them directly for more information about the company.
+                </p>
               </div>
+            </div>
 
-              <Button asChild variant="outline" className="w-full">
-                <Link to={`/companies/${job.company_info.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                  View Company Profile
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Similar Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Similar Jobs</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-3 hover:bg-secondary/50 transition-colors cursor-pointer">
-                  <h4 className="font-medium text-sm mb-1">Frontend Developer</h4>
-                  <p className="text-xs text-muted-foreground mb-2">Another Tech Company</p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Remote</span>
-                    <span className="text-success font-medium">$90k - $130k</span>
+            {/* Similar Jobs */}
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+              <h3 className="text-xl font-bold text-white mb-4">Similar Jobs</h3>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border border-white/10 rounded-lg p-3 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-primary/30 transition-colors cursor-pointer">
+                    <h4 className="font-medium text-sm mb-1 text-white">Frontend Developer</h4>
+                    <p className="text-xs text-slate-400 mb-2">Another Tech Company</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">Remote</span>
+                      <span className="text-green-400 font-medium">$90k - $130k</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <Button asChild variant="ghost" size="sm" className="w-full">
-                <Link to="/jobs">View More Jobs</Link>
-              </Button>
-            </CardContent>
-          </Card>
+                ))}
+                <Button asChild variant="outline" size="sm" className="w-full bg-white/5 border-white/10 text-slate-400 hover:bg-white/10 hover:text-white">
+                  <Link to="/jobs">View More Jobs</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

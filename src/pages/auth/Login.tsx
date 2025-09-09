@@ -49,61 +49,56 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/20 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded">
-              <img src="/favicon.ico" alt="Logo" className="h-6 w-6" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">JobNext</span>
-          </Link>
-        </div>
-
-        <Card className="shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12">
+      {/* Glass morphism background elements */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/10 rounded-full animate-float filter blur-3xl"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-purple-600/10 rounded-full animate-float animation-delay-2000 filter blur-3xl"></div>
+      
+      <div className="w-full max-w-md relative z-10">
+        <Card className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
+            <CardDescription className="text-slate-300">
               Sign in to your JobNext account to continue your job search
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-white">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/10 focus:border-white/30"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-3">
+                <Label htmlFor="password" className="text-white">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/10 focus:border-white/30"
                     required
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3"
+                    className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-white"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -120,18 +115,18 @@ const Login = () => {
                   <input
                     type="checkbox"
                     id="remember"
-                    className="rounded border-border"
+                    className="rounded border-white/30 bg-white/5"
                   />
                   <Label
                     htmlFor="remember"
-                    className="text-sm text-muted-foreground"
+                    className="text-sm text-slate-300"
                   >
                     Remember me
                   </Label>
                 </div>
                 <Link
                   to="/auth/forgot-password"
-                  className="text-primary hover:text-primary-hover transition-colors"
+                  className="text-blue-400 hover:text-blue-300 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -139,45 +134,43 @@ const Login = () => {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-primary hover:shadow-brand transition-all"
+                className="w-full bg-white/15 backdrop-blur-md border border-white/25 hover:bg-white/25 hover:border-white/35 text-white font-semibold transition-all"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
 
-            <div className="mt-6">
-              <Separator className="mb-4" />
-              <div className="text-center text-sm text-muted-foreground">
+            <div className="mt-8">
+              <Separator className="mb-6 bg-white/20" />
+              <div className="text-center text-sm text-slate-300">
                 Don't have an account?{" "}
                 <Link
                   to="/auth/signup"
-                  className="font-medium text-primary hover:text-primary-hover transition-colors"
+                  className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
                 >
                   Create one now
                 </Link>
               </div>
             </div>
 
-            <div className="mt-4 text-center">
-              <Link
-                to="/auth/employer-login"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Are you an employer?{" "}
-                <span className="text-primary">Sign in here</span>
-              </Link>
-            </div>
           </CardContent>
         </Card>
 
-        <div className="mt-6 text-center text-xs text-muted-foreground">
+        <div className="mt-8 text-center text-xs text-slate-400">
           By signing in, you agree to our{" "}
-          <Link to="/terms" className="text-primary hover:underline">
+          <Link to="/terms" className="text-blue-400 hover:underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link to="/privacy" className="text-primary hover:underline">
+          <Link to="/privacy" className="text-blue-400 hover:underline">
             Privacy Policy
           </Link>
         </div>

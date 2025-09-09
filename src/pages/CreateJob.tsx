@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Upload, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const CreateJob = () => {
     benefits: "",
     remote: false,
     urgent: false,
+    applicationFormId: "",
   });
   // Removed image upload state
 
@@ -69,8 +71,12 @@ const CreateJob = () => {
     typeof window !== "undefined"
       ? localStorage.getItem("isAdmin") === "1"
       : false;
+  
+  // Get available application forms
+  const forms = useQuery(api.admin.getApplicationFormsForSelection,
+    isAdmin ? { adminUserId: email } : 'skip');
 
-  // Only allow admins/employers to post jobs
+  // Only allow admins to post jobs
   if (!isAdmin) {
     return (
       <div className="container px-4 py-8">
@@ -91,20 +97,23 @@ const CreateJob = () => {
         formData.salaryMin && formData.salaryMax
           ? `$${formData.salaryMin} - $${formData.salaryMax}`
           : "";
-      await createJob({
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        salaryRange,
-        createdBy: email,
-        type: formData.type,
-        workMode: formData.workMode,
-        remote: formData.remote,
-        urgent: formData.urgent,
-        requirements: formData.requirements,
-        benefits: formData.benefits,
-        skills,
-      });
+      const jobData = {
+       title: formData.title,
+       description: formData.description,
+       location: formData.location,
+       salaryRange,
+       createdBy: email,
+       type: formData.type,
+       workMode: formData.workMode,
+       remote: formData.remote,
+       urgent: formData.urgent,
+       requirements: formData.requirements,
+       benefits: formData.benefits,
+       skills,
+       applicationFormId: formData.applicationFormId ? formData.applicationFormId as Id<'applicationForms'> : undefined,
+     };
+     
+     await createJob(jobData);
       toast({
         title: "Job Posted Successfully!",
         description: "Your job posting is now live and accepting applications.",
@@ -147,7 +156,7 @@ const CreateJob = () => {
           Post a New Job
         </h1>
         <p className="text-lg text-muted-foreground">
-          Create a compelling job posting to attract the best candidates
+          Create a compelling job posting to attract qualified candidates
         </p>
       </div>
 
@@ -402,7 +411,7 @@ const CreateJob = () => {
               <CardHeader>
                 <CardTitle>Preview</CardTitle>
                 <CardDescription>
-                  How your job will appear to candidates
+                  How your job posting will appear to applicants
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -459,6 +468,37 @@ const CreateJob = () => {
             </Card>
 
             {/* Company Logo Upload removed */}
+
+            {/* Application Form Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Application Form</CardTitle>
+                <CardDescription>
+                  Select the form applicants will use to apply
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="applicationFormId">Application Form</Label>
+                  <Select
+                    value={formData.applicationFormId}
+                    onValueChange={(value) => setFormData({ ...formData, applicationFormId: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select application form" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      
+                      {forms?.map((form) => (
+                        <SelectItem key={form._id} value={form._id}>
+                          {form.title} {form.isDefault && '(Default)'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Submit */}
             <Card>

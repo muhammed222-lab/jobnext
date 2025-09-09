@@ -9,6 +9,7 @@ export default defineSchema({
     isAdmin: v.boolean(),
     createdAt: v.number(),
   }).index("email", ["email"]),
+  
   jobs: defineTable({
     title: v.string(),
     description: v.string(),
@@ -17,55 +18,32 @@ export default defineSchema({
     imageUrl: v.string(),
     createdBy: v.string(),
     createdAt: v.number(),
+    applicationFormId: v.optional(v.id("applicationForms")), // Link to custom form
+    type: v.optional(v.string()),
+    workMode: v.optional(v.string()),
+    remote: v.optional(v.boolean()),
+    urgent: v.optional(v.boolean()),
+    requirements: v.optional(v.string()),
+    benefits: v.optional(v.string()),
+    skills: v.optional(v.array(v.string())),
   }),
+  
   applications: defineTable({
     jobId: v.string(),
     userId: v.string(),
-    fullName: v.optional(v.string()),
-    email: v.optional(v.string()),
-    resumeUrl: v.string(),
-    coverLetter: v.string(),
-    createdAt: v.number(),
-    dob: v.optional(v.string()),
-    gender: v.optional(v.string()),
-    maritalStatus: v.optional(v.string()),
-    nationality: v.optional(v.string()),
-    phone: v.optional(v.string()),
-    address: v.optional(v.string()),
-    nextOfKin: v.optional(v.string()),
-    emergencyContact: v.optional(v.string()),
-    nationalId: v.optional(v.string()),
-    passport: v.optional(v.string()),
-    tin: v.optional(v.string()),
-    ssn: v.optional(v.string()),
-    workPermit: v.optional(v.string()),
-    jobTitle: v.optional(v.string()),
-    department: v.optional(v.string()),
-    employeeId: v.optional(v.string()),
-    joiningDate: v.optional(v.string()),
-    employmentType: v.optional(v.string()),
-    workLocation: v.optional(v.string()),
-    supervisor: v.optional(v.string()),
-    education: v.optional(v.string()),
-    certifications: v.optional(v.string()),
-    previousEmployment: v.optional(v.string()),
+    fullName: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    address: v.string(),
+    resumeUrl: v.optional(v.string()),
+    coverLetter: v.optional(v.string()),
     skills: v.optional(v.string()),
-    bankName: v.optional(v.string()),
-    bankAccount: v.optional(v.string()),
-    bankAccountName: v.optional(v.string()),
-    paymentMethod: v.optional(v.string()),
     salary: v.optional(v.string()),
-    pensionAccount: v.optional(v.string()),
-    taxId: v.optional(v.string()),
-    pensionScheme: v.optional(v.string()),
-    healthInsurance: v.optional(v.string()),
-    otherContributions: v.optional(v.string()),
-    contractAccepted: v.optional(v.boolean()),
-    offerAccepted: v.optional(v.boolean()),
-    ndaAccepted: v.optional(v.boolean()),
-    handbookAccepted: v.optional(v.boolean()),
-    workTools: v.optional(v.string()),
-  }).index("userId", ["userId"]),
+    availability: v.optional(v.string()),
+    createdAt: v.number(),
+    formData: v.optional(v.any()), // Store custom form submission data
+  }).index("userId", ["userId"]).index("jobId", ["jobId"]),
+  
   messages: defineTable({
     jobId: v.string(),
     senderId: v.string(),
@@ -73,4 +51,51 @@ export default defineSchema({
     content: v.string(),
     createdAt: v.number(),
   }),
+  
+  // Custom application forms
+  applicationForms: defineTable({
+    title: v.string(),
+    description: v.optional(v.string()),
+    jobId: v.optional(v.id("jobs")), // Optional link to specific job
+    isDefault: v.boolean(), // Whether this is the default form
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  }).index("jobId", ["jobId"]),
+  
+  // Form fields configuration
+  formFields: defineTable({
+    formId: v.id("applicationForms"),
+    fieldType: v.union(
+      v.literal("text"),
+      v.literal("email"),
+      v.literal("phone"),
+      v.literal("textarea"),
+      v.literal("select"),
+      v.literal("checkbox"),
+      v.literal("radio"),
+      v.literal("file"),
+      v.literal("number"),
+      v.literal("date")
+    ),
+    label: v.string(),
+    name: v.string(),
+    required: v.boolean(),
+    placeholder: v.optional(v.string()),
+    options: v.optional(v.array(v.string())), // For select, radio, checkbox
+    validation: v.optional(v.string()), // Custom validation regex
+    order: v.number(), // Display order
+    createdAt: v.number(),
+  }).index("formId", ["formId"]),
+
+  // Application files (for form submissions)
+  applicationFiles: defineTable({
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    fileType: v.string(),
+    fileSize: v.number(),
+    applicationId: v.id("applications"),
+    fieldName: v.string(),
+    uploadedAt: v.number(),
+  }).index("applicationId", ["applicationId"]).index("fieldName", ["fieldName"]),
 });
+

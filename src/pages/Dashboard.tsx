@@ -20,8 +20,11 @@ import {
   Trash2,
   MessageSquare,
   BarChart3,
+  MapPin,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const Dashboard = () => {
   const email =
@@ -41,205 +44,219 @@ const Dashboard = () => {
   );
 
   // Stats (dynamic)
-  const stats = isAdmin
-    ? [
-        {
-          label: "Active Jobs",
-          value: jobs ? jobs.length : 0,
-          icon: Briefcase,
-          color: "text-primary",
-        },
-      ]
-    : [
-        {
-          label: "Applications",
-          value: applications ? applications.length : 0,
-          icon: Briefcase,
-          color: "text-primary",
-        },
-      ];
+  const stats = [
+    {
+      label: "Applications",
+      value: applications ? applications.length : 0,
+      icon: Briefcase,
+      color: "text-primary",
+    },
+  ];
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState("applications");
 
   return (
-    <div className="container px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-          {isAdmin ? "Employer Dashboard" : "User Dashboard"}
-        </h1>
-        <div className="mb-2 text-lg text-muted-foreground">
-          <div>
-            Full Name:{" "}
-            <span className="font-semibold text-foreground">
-              {user?.fullName || "-"}
-            </span>
-          </div>
-          <div>
-            Email:{" "}
-            <span className="font-semibold text-foreground">
-              {user?.email || email || "-"}
-            </span>
+    <div className="min-h-screen bg-slate-950">
+      <div className="container px-4 py-8">
+        {/* Header Section */}
+        <div className="mb-8 animate-fade-in-up">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+                Career Dashboard
+              </h1>
+              <div className="flex flex-wrap gap-6 text-lg text-slate-300">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-white">Welcome back,</span>
+                  <span className="font-bold text-primary">{user?.fullName || user?.email || email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>Last login: {new Date().toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="sm" className="rounded-full border-white/20 text-white hover:bg-white/10">
+                <span className="text-sm">Settings</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardContent className="p-6">
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+          {stats.map((stat, index) => (
+            <div key={index} className="group relative overflow-hidden rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 hover:shadow-xl transition-all duration-500">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-slate-400 mb-2">
                     {stat.label}
                   </p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-white group-hover:text-primary transition-colors">
                     {stat.value}
                   </p>
                 </div>
-                <div className={`p-2 rounded-lg bg-secondary/50`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                <div className={`p-3 rounded-xl bg-primary/10 backdrop-blur-md group-hover:bg-primary/20 transition-all`}>
+                  <stat.icon className={`h-6 w-6 text-primary group-hover:scale-110 transition-transform`} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-xs text-slate-500">
+                  {index === 0 ? "Active listings" :
+                   index === 1 ? "Registered companies" :
+                   index === 2 ? "Total users" : "Success rate"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      {/* Only show job management for admins/employers */}
-      {isAdmin ? (
-        <Tabs defaultValue="jobs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="jobs">Job Management</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="jobs" className="space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <div>
-                  <CardTitle>Your Job Posts</CardTitle>
-                  <CardDescription>
-                    Manage and track your job postings
-                  </CardDescription>
-                </div>
-                <Button asChild className="bg-gradient-primary">
-                  <Link to="/dashboard/create-job">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Post New Job
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {jobs && jobs.length > 0 ? (
-                    jobs
-                      .filter((job) => job.createdBy === email)
-                      .map((job) => (
-                        <div
-                          key={job._id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all"
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="font-semibold text-foreground">
-                                {job.title}
-                              </h3>
-                              {/* You can add more job info here */}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span>{job.location}</span>
-                              <span>•</span>
-                              <span>{job.salaryRange}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-6">
-                            <Button variant="outline" size="sm" asChild>
-                              <Link to={`/jobs/${job._id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+        {/* Main Content Tabs - Simplified implementation */}
+        <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+          <div className="grid w-full grid-cols-2 lg:grid-cols-3 bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10 gap-1">
+            <button
+              onClick={() => setActiveTab("jobs")}
+              className={`rounded-lg py-3 px-4 transition-all ${
+                activeTab === "jobs"
+                  ? "bg-primary text-white shadow-lg"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              Job Search
+            </button>
+            <button
+              onClick={() => setActiveTab("applications")}
+              className={`rounded-lg py-3 px-4 transition-all ${
+                activeTab === "applications"
+                  ? "bg-primary text-white shadow-lg"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              My Applications
+            </button>
+          </div>
+
+          {/* Tab Content */}
+
+          {activeTab === "applications" && (
+            <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6 hover:border-primary/30 transition-all duration-300">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Job Applications</h2>
+                <p className="text-slate-400">
+                  Track the status of your submitted applications
+                </p>
+              </div>
+              <div className="space-y-4 mt-6">
+                {applications && applications.length > 0 ? (
+                  applications.map((app, index) => (
+                    <div
+                      key={app._id}
+                      className="p-6 rounded-lg border border-white/10 bg-white/5 hover:border-primary/30 hover:shadow-xl transition-all duration-300 group"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-xl font-semibold text-white group-hover:text-primary transition-colors">
+                            {app.jobTitle || "Position Applied"}
+                          </h3>
+                          <div className="text-sm text-slate-400 mt-1">
+                            Applied on {new Date(app.createdAt).toLocaleDateString()}
                           </div>
                         </div>
-                      ))
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      No jobs found.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Job Performance Analytics
-                </CardTitle>
-                <CardDescription>
-                  Track the performance of your job postings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    Analytics Coming Soon
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Detailed analytics and insights will be available soon.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>My Applications</CardTitle>
-            <CardDescription>Jobs you have applied for</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {applications && applications.length > 0 ? (
-                applications.map((app) => (
-                  <div key={app._id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {app.jobTitle || "Job"}
-                        </h3>
-                        <div className="text-sm text-muted-foreground">
-                          Applied on{" "}
-                          {new Date(app.createdAt).toLocaleDateString()}
+                        <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+                          Under Review
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                          <span className="font-medium text-white">Status:</span>
+                          <span>Application Received</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                          <span className="font-medium text-white">Last Update:</span>
+                          <span>{new Date(app.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <Badge variant="outline">Application</Badge>
+                      
+                      {app.coverLetter && (
+                        <div className="mt-4 p-4 bg-white/5 backdrop-blur-md rounded-lg border border-white/10">
+                          <h4 className="font-semibold text-sm mb-2 text-white">Cover Letter Preview</h4>
+                          <p className="text-sm text-slate-400 line-clamp-2">
+                            {app.coverLetter}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="mt-4 flex items-center gap-3">
+                        <Button variant="outline" size="sm" className="rounded-lg border-primary/30 text-primary hover:bg-primary/20 hover:text-white">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                        <Button variant="outline" size="sm" className="rounded-lg border-primary/30 text-primary hover:bg-primary/20 hover:text-white">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Contact HR
+                        </Button>
+                      </div>
                     </div>
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      {app.coverLetter
-                        ? app.coverLetter.slice(0, 80) + "..."
-                        : "No cover letter"}
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <Briefcase className="h-16 w-16 text-slate-500 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-semibold text-white mb-2">No applications yet</h3>
+                    <p className="text-slate-400 mb-6">
+                      Start applying to jobs to track your applications here
+                    </p>
+                    <Button asChild className="bg-primary/20 border-primary/30 text-white hover:bg-primary/30">
+                      <Link to="/jobs" className="flex items-center gap-2">
+                        <Search className="h-4 w-4" />
+                        Browse Jobs
+                      </Link>
+                    </Button>
+                    <div className="mt-4 text-sm text-slate-400">
+                      <p>Tip: Customize your resume and cover letter for each application to increase your chances!</p>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center text-muted-foreground">
-                  You have not applied for any jobs yet.
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+
+        </div>
+
+        {/* Recent Activity Section */}
+        <div className="mt-12 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+          <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-6">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-white">Recent Activity</h2>
+              <p className="text-slate-400">Latest updates and actions on your account</p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 p-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10">
+                <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <span className="text-green-400 text-sm font-bold">✓</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">Profile updated successfully</p>
+                  <p className="text-xs text-slate-400">2 minutes ago</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4 p-3 rounded-lg bg-white/5 backdrop-blur-md border border-white/10">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <span className="text-blue-400 text-sm">Email</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">New job recommendation available</p>
+                  <p className="text-xs text-slate-400">1 hour ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
